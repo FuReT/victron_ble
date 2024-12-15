@@ -1,0 +1,156 @@
+substitutions:
+  # Set the MAC addresses and encryption keys of your Victron devices here
+  # The values here are examples and cannot work for your devices
+  # 
+  smart_solar_mac_address: xx:xx:xx:xx:xx:xx
+  smart_solar_encryption_key: lkfjqkldfjdkfjslkdjfsdf!è§fsè!§df
+  
+esphome:
+  name: "victron-ble"
+
+external_components:
+  - source: github://Fabian-Schmidt/esphome-victron_ble
+
+esp32:
+  board: esp32dev
+
+logger:
+  level: DEBUG
+
+esp32_ble_tracker:
+
+victron_ble:
+  - id: MySmartSolar
+    mac_address: ${smart_solar_mac_address}
+    bindkey: ${smart_solar_encryption_key}
+
+sensor:
+  # MySmartSolar
+  - platform: victron_ble
+    victron_ble_id: MySmartSolar
+    id: battery_voltage
+    name: "Battery Voltage"
+    type: BATTERY_VOLTAGE
+  - platform: victron_ble
+    victron_ble_id: MySmartSolar
+    name: "Battery POWER"
+    id: battery_power
+    type: BATTERY_POWER
+  - platform: victron_ble
+    victron_ble_id: MySmartSolar
+    name: "Yield Today"
+    id: yield_today
+    type: YIELD_TODAY
+  - platform: victron_ble
+    victron_ble_id: MySmartSolar
+    name: "PV Power"
+    id: pv_power
+    type: PV_POWER
+
+
+# Various ways to configure fonts
+font:
+  - file: "fonts/Arial.ttf"
+    id: arial_48
+    size: 48
+    bpp: 2
+  - file: "fonts/Arial Rounded Bold.ttf"
+    id: arial_24
+    size: 24
+    bpp: 2
+  - file: "fonts/Arial.ttf"
+    id: arial_12
+    size: 12
+    bpp: 2
+  - file: "fonts/Arial Rounded Bold.ttf"
+    id: arial_18
+    size: 18
+    bpp: 2
+
+color:
+  - id: my_red
+    red: 100%
+    green: 0%
+    blue: 0%
+  - id: my_blue
+    red: 0%
+    green: 0%
+    blue: 100%
+  - id: my_gray
+    red: 50%
+    green: 50%
+    blue: 50%
+  - id: my_black
+    red: 100%
+    green: 100%
+    blue: 100%
+  - id: my_campster
+    red_int: 66
+    green_int: 66
+    blue_int: 66
+    white_int: 0
+
+image:
+  - file: "image.gif"
+    id: my_image
+    resize: 320x170 
+    type: RGB24
+
+# define spi pins
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+
+# configure the display and define the output
+display:
+ - platform: ili9xxx
+   model: st7789v
+   #show_test_card: true auto_
+   auto_clear_enabled: true
+   #rotation: 180°
+   id: display_st7789
+   dimensions:
+     height: 170
+     width: 320
+     offset_height: 35
+     offset_width: 0
+   transform:
+     swap_xy: true
+     mirror_x: true
+     mirror_y: false
+   color_order: bgr
+   data_rate: 40MHz
+   cs_pin: GPIO15
+   dc_pin: GPIO2
+   reset_pin: GPIO4
+   invert_colors: true
+   spi_mode: MODE0
+   # doesn't work with transform above... only use one of them
+   pages:
+     - id: pagel
+       lambda: |-
+         it.image(0, 0, id(my_image));
+         if (id(battery_voltage).has_state()) {
+           it.printf(60, 46, id(arial_24), id(my_campster),display::TextAlign::TOP_LEFT, "%.2f V", id(battery_voltage).state);
+         }
+         else {
+           it.print(60, 46, id(arial_24), id(my_red),display::TextAlign::TOP_LEFT, "-");
+         }
+         if (id(pv_power).has_state()) {
+           it.printf(60, 106, id(arial_24), id(my_campster),display::TextAlign::TOP_LEFT, "%.0f W", id(pv_power).state);
+         }
+         else {
+           it.print(60, 106, id(arial_24), id(my_red),display::TextAlign::TOP_LEFT, "-");
+         }
+         if (id(yield_today).has_state()) {
+           it.printf(225, 46, id(arial_24), id(my_campster),display::TextAlign::TOP_LEFT, "%.1f kWh", id(yield_today).state);
+         }
+         else {
+           it.print(225, 46, id(arial_24), id(my_red),display::TextAlign::TOP_LEFT, "-");
+         }
+         if (id(battery_power).has_state()) {
+           it.printf(225, 106, id(arial_24), id(my_campster),display::TextAlign::TOP_LEFT, "%.0f W", id(battery_power).state);
+         }
+         else {
+           it.print(225, 106, id(arial_24), id(my_red),display::TextAlign::TOP_LEFT, "-");
+         }
